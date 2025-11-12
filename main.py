@@ -29,9 +29,12 @@ RESULTS_CHANNEL_ID = int(os.getenv("RESULTS_CHANNEL_ID", "1275077562984435853"))
 
 # Discord-Client + Intents
 intents = discord.Intents.default()
-intents.members = True
+intents.guilds = True
+intents.message_content = True  # WICHTIG: erlaubt Lesen von Nachrichteninhalten
+
 client = commands.Bot(command_prefix="/", intents=intents)
 tree = client.tree
+
 
 # Zeitzone
 BERLIN_TZ = pytz.timezone("Europe/Berlin")
