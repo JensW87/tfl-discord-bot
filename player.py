@@ -1426,6 +1426,16 @@ def get_worksheet_by_gid(workbook, gid: int):
     if gid in _PLAYER_WORKSHEET_CACHE_BY_GID:
         return _PLAYER_WORKSHEET_CACHE_BY_GID[gid]
 
+    # Einige ältere Module halten ihre eigene WB-Referenz. Nach einem
+    # Reconnect kann diese None sein, obwohl die zentrale Season-Verbindung
+    # längst wieder verfügbar ist. Deshalb niemals blind workbook.worksheets()
+    # aufrufen, sondern auf die zentrale Verbindung zurückfallen.
+    if workbook is None:
+        workbook = get_season_spreadsheet()
+
+    if workbook is None:
+        raise RuntimeError("Season-Spreadsheet ist aktuell nicht verbunden.")
+
     for ws in workbook.worksheets():
         _PLAYER_WORKSHEET_CACHE_BY_GID[int(ws.id)] = ws
         _PLAYER_WORKSHEET_CACHE_BY_NAME[getattr(ws, "title", "")] = ws
@@ -1517,8 +1527,12 @@ def get_division_modes_for_streichmodus(div_number: int) -> list[str]:
     if not col_index:
         return []
 
+    # Nicht über restinfo.WB gehen: diese Modul-Referenz kann nach einem
+    # Reconnect None sein. Die zentrale Season-Verbindung ist die führende
+    # Quelle für alle Player-/Streichmodus-Zugriffe.
+    wb = get_season_spreadsheet()
     ws = get_worksheet_by_gid(
-        restinfo.WB,
+        wb,
         STREICHMODUS_CONFIG_WORKSHEET_GID,
     )
 
